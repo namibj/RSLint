@@ -138,8 +138,17 @@ impl<'a> DDlogWorker<'a> {
 
     pub fn run(mut self) -> Result<(), String> {
         if let Err(_) = ::std::env::var("TIMELY_WORKER_LOG_ADDR") {
-            // Initialize profiling
-            self.init_profiling();
+            if let Ok(block_profiling) = ::std::env::var("BLOCK_DIFFERENTIAL_DATAFLOW_PROFILING") {
+                match block_profiling.as_str() {
+                    "0" | "false" | "FALSE" | "no" | "NO" =>
+                        // Initialize profiling
+                        self.init_profiling(),
+                    _ => ()
+                }
+            } else {
+                // Initialize profiling
+                self.init_profiling();
+            }
         }
 
         if let Ok(addr) = ::std::env::var("DIFFERENTIAL_LOG_ADDR") {
