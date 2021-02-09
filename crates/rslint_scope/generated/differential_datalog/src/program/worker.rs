@@ -137,8 +137,20 @@ impl<'a> DDlogWorker<'a> {
     }
 
     pub fn run(mut self) -> Result<(), String> {
-        // Initialize profiling
-        self.init_profiling();
+        if let Err(_) = ::std::env::var("TIMELY_WORKER_LOG_ADDR") {
+            // Initialize profiling
+            self.init_profiling();
+        }
+
+        if let Ok(addr) = ::std::env::var("DIFFERENTIAL_LOG_ADDR") {
+            if let Ok(stream) = ::std::net::TcpStream::connect(&addr) {
+                differential_dataflow::logging::enable(self.worker, stream);
+                // TODO: Hook into logging framework.
+                //info!("enabled DIFFERENTIAL logging to {}", addr);
+            } else {
+                panic!("Could not connect to differential log address: {:?}", addr);
+            }
+        }
 
         let probe = ProbeHandle::new();
         let (mut sessions, mut traces) = self.session_dataflow(probe.clone())?;
